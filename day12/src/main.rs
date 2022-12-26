@@ -1,33 +1,181 @@
-fn main() {
+use std::collections::VecDeque;
 
-    let input = std::fs::read_to_string("input.txt").unwrap();
+fn search(map : &str) -> u32 {
 
-    let map : Vec<Vec<char>> = input.lines().map(|l| l.chars().collect()).collect();
-    let mut route = vec![vec![0;map[0].len()];map.len()];
+    let m: Vec<Vec<char>> = map.lines().map(|l| l.chars().collect()).collect();
+    let mut v = vec![vec![u32::MAX; m[0].len()]; m.len()];
 
-    let mut boundary = Vec::new();
-    
-    for i in 0..map.len() {
-        for j in 0..map[0].len() {
-            if map[i][j] == 'S' {
-                boundary.push((i,j))
+    let mut f = VecDeque::new();
+
+
+    for i in 0..m.len() {
+        for j in 0..m[0].len() {
+            if m[i][j] == 'S' {
+                f.push_front((i, j));
+                v[i][j] = 0;
             }
         }
     }
 
-    loop {
-        let mut tmp = Vec::new();
-        for b in boundary {
-            if b.0 > 0 && map[b.0-1][b.1] <= map[b.0][b.1] + 1 && route[b.0-1][b.1]
+    fn g(c: char, d: char) -> bool {
+        if d == 'S' {
+            return true
+        } else if c == 'E' {
+            match d {
+                'y' | 'z' => true,
+                _ => false
+            }
+        } else {
+            (c as u8)  <= (d as u8) + 1
         }
-        boundary = tmp;
+    }
+    
+    loop {
+        match f.pop_back() {
+            Some(x) => {
+                // println!("{} {}",x.0,x.1);
+                if x.0 > 0 && v[x.0 - 1][x.1] == u32::MAX && g(m[x.0-1][x.1],m[x.0][x.1]) {
+                    if m[x.0-1][x.1] == 'E' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0 - 1, x.1));
+                        v[x.0 - 1][x.1] = v[x.0][x.1]+1;
+                    }
+                }
+                if x.1 > 0 && v[x.0][x.1-1] == u32::MAX && g(m[x.0][x.1-1],m[x.0][x.1]) {
+                    if m[x.0][x.1-1] == 'E' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0, x.1-1));
+                        v[x.0][x.1-1] = v[x.0][x.1]+1;
+                    }
+
+                }
+                if x.0 < m.len() - 1 && v[x.0 + 1][x.1] == u32::MAX && g(m[x.0+1][x.1],m[x.0][x.1]) {
+                    if m[x.0+1][x.1] == 'E' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0 + 1, x.1));
+                        v[x.0 + 1][x.1] = v[x.0][x.1]+1;
+                    }
+
+                }
+                if x.1 < m[0].len() - 1 && v[x.0][x.1+1] == u32::MAX && g(m[x.0][x.1+1],m[x.0][x.1]) {
+                    if m[x.0][x.1+1] == 'E' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0, x.1+1));
+                        v[x.0][x.1+1] = v[x.0][x.1]+1;
+                    }
+                }
+
+                // for i in 0..m.len() {
+                //     for j in 0..m[0].len() {
+                //         if v[i][j] == u32::MAX {
+                //             print!("M ")
+                //         } else {
+                //             print!("{} ",v[i][j])
+                //         }
+                //     }
+                //     println!()
+                // }
+
+            },
+            None => break
+        }
+    }
+    0
+}
+
+fn search2(map : &str) -> u32 {
+
+    let m: Vec<Vec<char>> = map.lines().map(|l| l.chars().collect()).collect();
+    let mut v = vec![vec![u32::MAX; m[0].len()]; m.len()];
+
+    let mut f = VecDeque::new();
+
+
+    for i in 0..m.len() {
+        for j in 0..m[0].len() {
+            if m[i][j] == 'E' {
+                f.push_front((i, j));
+                v[i][j] = 0;
+            }
+        }
     }
 
+    fn g(c: char, d: char) -> bool {
+        if d == 'E' {
+            return true
+        } else {
+            (c as u8)  >= (d as u8) - 1
+        }
+    }
+    
+    loop {
+        match f.pop_back() {
+            Some(x) => {
+                // println!("{} {}",x.0,x.1);
+                if x.0 > 0 && v[x.0 - 1][x.1] == u32::MAX && g(m[x.0-1][x.1],m[x.0][x.1]) {
+                    if m[x.0-1][x.1] == 'a' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0 - 1, x.1));
+                        v[x.0 - 1][x.1] = v[x.0][x.1]+1;
+                    }
+                }
+                if x.1 > 0 && v[x.0][x.1-1] == u32::MAX && g(m[x.0][x.1-1],m[x.0][x.1]) {
+                    if m[x.0][x.1-1] == 'a' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0, x.1-1));
+                        v[x.0][x.1-1] = v[x.0][x.1]+1;
+                    }
 
+                }
+                if x.0 < m.len() - 1 && v[x.0 + 1][x.1] == u32::MAX && g(m[x.0+1][x.1],m[x.0][x.1]) {
+                    if m[x.0+1][x.1] == 'a' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0 + 1, x.1));
+                        v[x.0 + 1][x.1] = v[x.0][x.1]+1;
+                    }
 
-    let part1 = 0;
+                }
+                if x.1 < m[0].len() - 1 && v[x.0][x.1+1] == u32::MAX && g(m[x.0][x.1+1],m[x.0][x.1]) {
+                    if m[x.0][x.1+1] == 'a' {
+                        return v[x.0][x.1] + 1
+                    } else {
+                        f.push_front((x.0, x.1+1));
+                        v[x.0][x.1+1] = v[x.0][x.1]+1;
+                    }
+                }
 
-    let part2 = 0;
+                // for i in 0..m.len() {
+                //     for j in 0..m[0].len() {
+                //         if v[i][j] == u32::MAX {
+                //             print!("M ")
+                //         } else {
+                //             print!("{} ",v[i][j])
+                //         }
+                //     }
+                //     println!()
+                // }
 
-    println!{"{}\n{}",part1,part2}
+            },
+            None => break
+        }
+    }
+    0
+}
+
+fn main() {
+
+    let input = std::fs::read_to_string("input.txt").unwrap();
+
+    let part1 = search(&input);
+
+    let part2 = search2(&input);
+
+    println! {"{}\n{}",part1,part2}
 }

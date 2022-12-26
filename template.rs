@@ -6,5 +6,5 @@ fn main() {
 
     let part2 = 0;
 
-    println!{"{}\n{}",part1,part2}
+    println!("{}\n{}",part1,part2)
 }
