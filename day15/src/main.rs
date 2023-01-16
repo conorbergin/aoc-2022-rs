@@ -1,69 +1,85 @@
-use std::{cmp, net::Incoming};
-
-
-
+use itertools::*;
 fn main() {
     let input = std::fs::read_to_string("input.txt").unwrap();
 
-    let data: Vec<Vec<i32>> = input
+    let data: Vec<(i32, i32, i32, i32)> = input
         .lines()
         .map(|s| {
-            s.strip_prefix("Sensor at x=")
-                .unwrap()
-                .split(": closest beacon is at x=")
-                .map(|a| {
-                    a.split(", y=")
-                        .map(|s| s.parse::<i32>().unwrap())
-                        .collect::<Vec<_>>()
-                })
-                .flatten()
-                .collect()
+            sscanf::sscanf!(
+                s,
+                "Sensor at x={i32}, y={i32}: closest beacon is at x={i32}, y={i32}"
+            )
+            .unwrap()
         })
         .collect();
 
-    let min_x = data.iter().map(|v| cmp::min(v[0],v[2])).min().unwrap();
-    let min_y = data.iter().map(|v| cmp::min(v[1],v[3])).min().unwrap();
-    let max_x = data.iter().map(|v| cmp::max(v[0],v[2])).max().unwrap();
-    let max_y = data.iter().map(|v| cmp::max(v[1],v[3])).max().unwrap();
+    let intercept = 2_000_000;
+    let part_1 = data
+        .iter()
+        .filter_map(|(sx, sy, bx, by)| {
+            let o = (bx - sx).abs() + (by - sy).abs() - (intercept - sy).abs();
+            if o > 0 {
+                if *sy == intercept {
+                    Some(vec![(sx - o, sx + o)])
+                } else {
+                    Some(vec![(sx - o, sx - 1), (sx + 1, sx + o)])
+                }
+            } else {
+                None
+            }
+        })
+        .flatten()
+        .fold(Vec::new(), |acc: Vec<(i32, i32)>, mut e| {
+            let mut out = Vec::new();
+            for a in acc {
+                if a.0 >= e.1 || a.1 <= e.0 {
+                    out.push(a)
+                } else {
+                    e = (e.0.min(a.0), e.1.max(a.1))
+                }
+            }
+            out.push(e);
+            out
+        })
+        .iter()
+        .fold(0, |acc, e| acc + 1 + (e.1 - e.0));
 
-    let pad_x = data.iter().map(|v| (v[0]-v[2]).abs()).max().unwrap();
-    let pad_y = data.iter().map(|v| (v[1]-v[3]).abs()).max().unwrap();
+    println!("{}", part_1);
 
 
-    fn in_cone(p :(i32,i32), c : &Vec<i32>) -> bool {
-        if (p.0 == c[0] && p.1 == c[1]) || (p.0 == c[2] && p.1 == c[3]) {
-            return false
-        } else if (p.0-c[0]).abs() + (p.1-c[1]).abs() <= (c[2]-c[0]).abs() + (c[3]-c[1]).abs() {
-            return true
-        } else {
-            return false
-        }
-    }
-
-    let width : usize = (max_x - min_x + 1 + 2*pad_x).try_into().unwrap();
-    let depth : usize = (max_y - min_y + 1 + 2*pad_y).try_into().unwrap();
-
-    let offset_x = min_x - pad_x;
-    let offset_y = min_y + pad_y;
-
-    println!("{} {} {} {}    {} {} ",min_x,min_y,max_x,max_y,offset_x,offset_y);
-
-
-   //let part1 = (0..width).filter(|&x| in_cone(((x as i32+offset_x),2_000_000),&data)).count();
-
-    println!("{} {}",0,u64::MAX);
-
-    fn find_beacon(cones: &Vec<Vec<i32>>) -> Option<u64> {
-        for c in cones {
-            
-        }
-    }
-
-    let part2 = find_beacon((0,0,4_000_000,4_000_000), &data).unwrap();
-
-    println!("{}",part2);
     
+    
+    fn f(x0:i32,y0:i32,x1:i32,y1:i32,data:&Vec<(i32,i32,i32,i32)>) -> Option<u64> {
 
 
+        let split = if x1-x0 >= y1 - y0 {
+            [(x0,y0,(x1+x0)/2,y1),((x1+x0)/2 + 1,y0,x1,y1)]
+        } else {
+            [(x0,y0,x1,(y0+y1)/2),(x0,(y0+y1)/2 + 1,x1,y1)]
+        };
 
+        for (a,b,c,d) in split {
+
+            if data.iter().all(|(sx,sy,bx,by)| {
+                let r = (bx-sx).abs() + (by-sy).abs();
+                iproduct!([a,c],[b,d]).any(|(x,y)| {
+                    (x-sx).abs() + (y-sy).abs() > r
+                })
+            }) {
+                if a == c && b == d {
+                    return Some(a as u64*4_000_000 + b as u64)
+                } else {
+                    match f(a,b,c,d,data) {
+                        Some(x) => return Some(x),
+                        None => {}
+                    }
+                }
+            }
+        }            
+        None
+    }
+
+    let part_2 = f(0,0,4_000_000,4_000_000,&data).unwrap();
+    // let part_2 = f(0,0,20,20,&data).unwrap();
+    println!("{}",part_2);
 }
