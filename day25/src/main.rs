@@ -29,7 +29,5 @@ fn main() {
         .lines()
         .fold(String::new(), |acc, e| snafu_add(&acc, e));
 
-    let part2 = 0;
-
-    println!("{}\n{}", part1, part2)
+    println!("{}", part1)
 }

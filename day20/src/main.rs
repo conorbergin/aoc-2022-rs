@@ -1,13 +1,7 @@
-fn main() {
-    let input = std::fs::read_to_string("input.txt").unwrap();
 
-    let mut inp: Vec<i64> = input.lines().map(|x| x.parse::<i64>().unwrap()).collect();
-    let mut ind: Vec<usize> = (0..inp.len()).collect();
-
-    let mut inp2 = inp.clone();
-    let mut ind2 = ind.clone();
-
-    fn mix(inp: &mut Vec<i64>, ind: &mut Vec<usize>) -> () {
+fn mix(mut inp: Vec<i64>, n: usize) -> i64 {
+    let mut ind = (0..inp.len()).collect::<Vec<_>>();
+    for _ in 0..n {
         for p in 0..inp.len() {
             let i = ind.iter().position(|&x| x == p).unwrap();
 
@@ -38,32 +32,28 @@ fn main() {
             }
         }
     }
-
-    mix(&mut inp, &mut ind);
-
     let i = inp.iter().position(|&x| x == 0).unwrap();
-    println!(
-        "{}",
-        inp[(i + 1000) % inp.len()] + inp[(i + 2000) % inp.len()] + inp[(i + 3000) % inp.len()]
+    inp[(i + 1000) % inp.len()] + inp[(i + 2000) % inp.len()] + inp[(i + 3000) % inp.len()]
+}
+
+fn main() {
+    let input = std::fs::read_to_string("minput.txt").unwrap();
+
+    let part_1 = mix(
+        input
+            .lines()
+            .map(|x| x.parse::<i64>().unwrap())
+            .collect::<Vec<_>>(),
+        1,
     );
+    println!("{}", part_1);
 
-    for j in 0..inp2.len() {
-        inp2[j] *= 811589153
-    }
-
-    for _ in 0..10 {
-        mix(&mut inp2, &mut ind2)
-    }
-
-    let k = inp.iter().position(|&x| x == 0).unwrap();
-    println!(
-        "{}",
-        inp2[(k + 1000) % inp2.len()]
-            + inp2[(k + 2000) % inp2.len()]
-            + inp2[(k + 3000) % inp2.len()]
+    let part_2 = mix(
+        input
+            .lines()
+            .map(|x| x.parse::<i64>().unwrap() * 811589153)
+            .collect::<Vec<_>>(),
+        10,
     );
-
-    // for l in inp2.iter() {
-    //     println!("{}", l)
-    // }
+    println!("{}", part_2)
 }
